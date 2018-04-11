@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,6 +28,8 @@ namespace Stock
             LoadData();
             LoadCategory();
         }
+
+        string imglocation = "";
 
         // Double Click on Selected Item List
         private void dataGridView1_DoubleClick(object sender, EventArgs e)
@@ -122,6 +125,11 @@ namespace Stock
             SqlConnection con = new SqlConnection("Data Source=.\\MSSQLEXPRESS;Initial Catalog=Stock;Integrated Security=True");
             // Insert Logic
 
+            if (imglocation == null)
+            {
+                MessageBox.Show("Please Add Picture.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
             bool status = false;
             // 0==Active 1==Deactive
             if (comboBox2.SelectedIndex == 0)
@@ -134,6 +142,7 @@ namespace Stock
             }
 
             var SqlQuery = "";
+            var queryimg = "";
 
             if (IfProductExist(con, textBox3.Text))
             {
@@ -141,11 +150,22 @@ namespace Stock
             }
             else
             {
+                System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceNames();
+                byte[] image = null;
+                FileStream stream = new FileStream(imglocation, FileMode.Open, FileAccess.Read);
+                BinaryReader br = new BinaryReader(stream);
+                image = br.ReadBytes((int)stream.Length);
+                
                 con.Open();
                 SqlQuery = @"INSERT INTO [Stock].[dbo].[Products] ([ProductCode],[ProductName],[ProductCategory],[ProductDescription],[ProductPrice],[ProductStatus])
                             VALUES ('" + textBox3.Text + "', '" + textBox4.Text + "', '" + comboBox1.Text + "', '" + textBox5.Text + "', '" + textBox6.Text + "', '" + status + "')";
                 SqlCommand cmd = new SqlCommand(SqlQuery, con);
                 cmd.ExecuteNonQuery();
+
+                queryimg = @"INSERT INTO [Stock].[dbo].[ImageData] ([ID],[Name],[Image]) VALUES ('" + textBox3.Text + "', '" + textBox4.Text + "', @image)";
+                SqlCommand asd = new SqlCommand(queryimg, con);
+                asd.Parameters.Add(new SqlParameter("@image", image));
+                asd.ExecuteNonQuery();
                 con.Close();
 
                 MessageBox.Show("Product Successfully Added.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -243,6 +263,13 @@ namespace Stock
         // Product Browse Image Button
         private void button7_Click(object sender, EventArgs e)
         {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Filter = "Image Files(*.jpg;*.png)|*.jpg;*.png|All files (*.*)|*.*";
+            if(dialog.ShowDialog()==DialogResult.OK)
+            {
+                imglocation=dialog.FileName.ToString();
+                pictureBox1.ImageLocation = imglocation;
+            }
 
         }
 
@@ -299,7 +326,7 @@ namespace Stock
             getCatCombo();
         }
 
-        // Fill Category ComboBox on Product tab
+        // Fill Category ComboBox on Product tab page
         private void getCatCombo()
         {
             comboBox1.Items.Clear();
@@ -321,7 +348,11 @@ namespace Stock
 
             if (IfCategoryExist(con, textBox1.Text))
             {
-                MessageBox.Show("Product already exist.");
+                MessageBox.Show("Category code already exist.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else if (IfCategoryNameExist(con, textBox2.Text))
+            {
+                MessageBox.Show("Category name already exist.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
@@ -331,9 +362,12 @@ namespace Stock
                 cmd.ExecuteNonQuery();
                 con.Close();
 
-                textBox1.Clear();
-                textBox2.Clear();
+                MessageBox.Show("Category Successfully Added.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
             }
+
+            textBox1.Clear();
+            textBox2.Clear();
 
             LoadCategory();
         }
@@ -348,29 +382,34 @@ namespace Stock
 
             if (IfCategoryExist(con, textBox1.Text) && x!=0)
             {
-                con.Open();
-                SqlQuery = @"DELETE FROM [Category] WHERE [CategoryCode] = '" + textBox1.Text + "'";
-                SqlCommand cmd = new SqlCommand(SqlQuery, con);
-                cmd.ExecuteNonQuery();
-                con.Close();
+                var result = MessageBox.Show("Are you sure you want to delete this category?", "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                if (result == DialogResult.OK)
+                {
+                    con.Open();
+                    SqlQuery = @"DELETE FROM [Category] WHERE [CategoryCode] = '" + textBox1.Text + "'";
+                    SqlCommand cmd = new SqlCommand(SqlQuery, con);
+                    cmd.ExecuteNonQuery();
+                    con.Close();
 
-                textBox1.Clear();
-                textBox2.Clear();
+                    textBox1.Clear();
+                    textBox2.Clear();
+
+                    // Update Reading Data
+                    LoadCategory();
+                }
+
             }
             else
             {
                 if (x==0)
                 {
-                    MessageBox.Show("Cannot delete this category.");
+                    MessageBox.Show("Cannot delete this category.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show("Category does not exist.");
+                    MessageBox.Show("Category does not exist.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
-
-            // Reading Data
-            LoadCategory();
         }
 
         // Category Update Button
@@ -385,28 +424,39 @@ namespace Stock
 
             if (IfCategoryExist(con, textBox1.Text) && x != 0)
             {
-                SqlQuery = @"UPDATE [Category] SET [CategoryName] = '" + textBox2.Text + "' WHERE [CategoryCode] = '" + textBox1.Text + "'";
-                SqlCommand cmd = new SqlCommand(SqlQuery, con);
-                cmd.ExecuteNonQuery();
-                con.Close();
+                if (IfCategoryNameExist(con, textBox2.Text))
+                {
+                    MessageBox.Show("Category name already exist.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    var result = MessageBox.Show("Are you sure you want to update this product?", "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                    if (result == DialogResult.OK)
+                    {
+                        SqlQuery = @"UPDATE [Category] SET [CategoryName] = '" + textBox2.Text + "' WHERE [CategoryCode] = '" + textBox1.Text + "'";
+                        SqlCommand cmd = new SqlCommand(SqlQuery, con);
+                        cmd.ExecuteNonQuery();
+                        con.Close();
 
-                textBox1.Clear();
-                textBox2.Clear();
+                        textBox1.Clear();
+                        textBox2.Clear();
+
+                        // Update Reading Data
+                        LoadCategory();
+                    }
+                }
             }
             else
             {
                 if (x == 0)
                 {
-                    MessageBox.Show("Cannot update this category.");
+                    MessageBox.Show("Cannot update this category.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show("Category does not exist.");
+                    MessageBox.Show("Category does not exist.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
-
-            // Reading Data
-            LoadCategory();
         }
 
         // Double Click on Category to Select
@@ -420,6 +470,22 @@ namespace Stock
         private bool IfCategoryExist(SqlConnection con, string categorycode)
         {
             SqlDataAdapter sda = new SqlDataAdapter("Select 1 From [Category] WHERE CategoryCode='" + categorycode + "' ", con);
+            DataTable dt = new DataTable();
+            sda.Fill(dt);
+            if (dt.Rows.Count > 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        //Check If Category Name Exists
+        private bool IfCategoryNameExist(SqlConnection con, string categoryname)
+        {
+            SqlDataAdapter sda = new SqlDataAdapter("Select 1 From [Category] WHERE CategoryName='" + categoryname + "' ", con);
             DataTable dt = new DataTable();
             sda.Fill(dt);
             if (dt.Rows.Count > 0)

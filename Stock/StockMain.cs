@@ -17,19 +17,17 @@ namespace Stock
             InitializeComponent();
         }
 
-        private void productsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void StockMain_Load(object sender, EventArgs e)
         {
-            Products pro = new Products();
-            pro.MdiParent = this;
-            pro.Show();
+            //button1.PerformClick();
         }
 
-        private void stockToolStripMenuItem_Click(object sender, EventArgs e)
+        private void closeMdi()
         {
-            Stock stk = new Stock();
-            stk.MdiParent = this;
-            stk.Show();
-
+            foreach (Form c in this.MdiChildren)
+            {
+                c.Close();
+            }
         }
 
         private void StockMain_FormClosing(object sender, FormClosingEventArgs e)
@@ -37,5 +35,33 @@ namespace Stock
             Application.Exit();
         }
 
+        // Exit Button
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        // Home Button
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Home depan = new Home();
+            depan.TopLevel = false;
+            mainpanel.Controls.Add(depan);
+            depan.Show();
+        }
+
+        // Order Button
+        private void button2_Click(object sender, EventArgs e)
+        {
+        }
+
+        // Stock Button
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Stock stk = new Stock();
+            stk.TopLevel = false;
+            mainpanel.Controls.Add(stk);
+            stk.Show();
+        }
     }
 }

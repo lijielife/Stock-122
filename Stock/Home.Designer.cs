@@ -1,6 +1,6 @@
 ﻿namespace Stock
 {
-    partial class Products
+    partial class Home
     {
         /// <summary>
         /// Required designer variable.
@@ -30,20 +30,20 @@
         {
             this.SuspendLayout();
             // 
-            // Products
+            // Home
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(700, 450);
+            this.BackColor = System.Drawing.Color.White;
+            this.ClientSize = new System.Drawing.Size(700, 550);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Name = "Products";
-            this.Text = "Products";
-            this.Load += new System.EventHandler(this.Products_Load);
+            this.Name = "Home";
+            this.Text = "Home";
+            this.Load += new System.EventHandler(this.Home_Load);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
     }
 }
